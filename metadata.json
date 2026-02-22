@@ -1,0 +1,5 @@
+{
+  "name": "WesDELVE",
+  "description": "WesDELVE - Westat’s Dynamic Engine for Leaflet Visualization Exports Tagline: \"Go beneath the surface.\" - A simplified GIS tool for visualizing Excel, CSV, and GeoJSON data, and exporting standalone interactive maps.",
+  "requestFramePermissions": []
+}
