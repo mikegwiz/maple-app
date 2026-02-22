@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, Menu, UploadCloud, SlidersHorizontal, MousePointerClick, ShieldCheck, Map as MapIcon, Palette } from 'lucide-react';
-import logo from '../../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
+import logo from '../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
 
 interface HomeStepProps {
     onStart: () => void;

@@ -4,7 +4,7 @@ import { ConfigStep } from './components/ConfigStep';
 import { MapStep } from './components/MapStep';
 import { HomeStep } from './components/HomeStep';
 import { AppState, AppStep, GeoJSONData } from './types';
-import logo from '../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
+import logo from './Maple_Leaf_Green_PNG_Clip_Art_Image.png';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
