@@ -173,14 +173,8 @@ export const generateMapHTML = (
     <div class="maple-branding">
         <div class="maple-title">MAPLE</div>
         <div class="social-links">
-            <a href="https://www.linkedin.com/in/mg-gis/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                <i class="fa-brands fa-linkedin"></i>
-            </a>
-            <a href="https://x.com/mikeGeoWiz" target="_blank" rel="noopener noreferrer" aria-label="X">
-                <i class="fa-brands fa-square-x-twitter"></i>
-            </a>
-            <a href="https://medium.com/@giangrande_m" target="_blank" rel="noopener noreferrer" aria-label="Medium">
-                <i class="fa-brands fa-medium"></i>
+            <a href="https://github.com/mikegwiz/maple-app" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <i class="fa-brands fa-github"></i>
             </a>
         </div>
     </div>
