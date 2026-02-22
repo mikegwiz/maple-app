@@ -15,7 +15,7 @@ export default defineConfig({
     port: 3010,
     host: '0.0.0.0',
   },
-  plugins: [react()],
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
