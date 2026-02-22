@@ -72,3 +72,7 @@ MAPLE was designed and developed by **Michael Giangrande**.
 *   [LinkedIn](https://www.linkedin.com/in/mg-gis/)
 *   [X / Twitter](https://x.com/mikeGeoWiz)
 *   [Medium](https://medium.com/@giangrande_m)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) - Copyright (c) 2026 Michael Giangrande.
