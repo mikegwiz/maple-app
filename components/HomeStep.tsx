@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, Menu, UploadCloud, SlidersHorizontal, MousePointerClick, ShieldCheck, Map as MapIcon, Palette } from 'lucide-react';
+import logo from '../../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
 
 interface HomeStepProps {
     onStart: () => void;
@@ -17,7 +18,7 @@ export const HomeStep: React.FC<HomeStepProps> = ({ onStart }) => {
 
                         {/* Logo */}
                         <div className="flex items-center gap-2">
-                            <img src="/Maple_Leaf_Green_PNG_Clip_Art_Image.png" alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
+                            <img src={logo} alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
                             <span className="font-bold text-xl tracking-tight text-slate-900">MAPLE</span>
                         </div>
 

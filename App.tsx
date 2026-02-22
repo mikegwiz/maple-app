@@ -4,6 +4,7 @@ import { ConfigStep } from './components/ConfigStep';
 import { MapStep } from './components/MapStep';
 import { HomeStep } from './components/HomeStep';
 import { AppState, AppStep, GeoJSONData } from './types';
+import logo from '../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -77,7 +78,7 @@ const App: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setState(s => ({ ...s, step: AppStep.HOME }))}>
-            <img src="/Maple_Leaf_Green_PNG_Clip_Art_Image.png" alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
+            <img src={logo} alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
             <span className="font-bold text-xl tracking-tight text-slate-900">MAPLE</span>
           </div>
         </div>
@@ -150,7 +151,7 @@ const App: React.FC = () => {
 
               {/* Brand */}
               <div className="flex items-center gap-2">
-                <img src="/Maple_Leaf_Green_PNG_Clip_Art_Image.png" alt="MAPLE Logo" className="w-7 h-7 object-contain drop-shadow-sm" />
+                <img src={logo} alt="MAPLE Logo" className="w-7 h-7 object-contain drop-shadow-sm" />
                 <span className="font-bold text-lg text-slate-800">MAPLE</span>
               </div>
 
