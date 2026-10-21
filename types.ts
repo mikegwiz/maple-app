@@ -32,6 +32,8 @@ export interface AppState {
 
 export interface Basemap {
   name: string;
+  // 'vector' basemaps use a MapLibre style URL; default is a raster tile URL template
+  type?: 'raster' | 'vector';
   url: string;
   attribution: string;
 }

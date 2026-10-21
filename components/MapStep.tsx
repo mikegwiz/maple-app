@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { maplibreGL } from '@maplibre/maplibre-gl-leaflet';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { GeoJSONData, Basemap } from '../types';
 import { BASEMAPS, COLOR_PALETTES } from '../constants';
 import { generateMapHTML } from '../services/exportUtils';
@@ -33,6 +35,23 @@ interface MapStepProps {
   colorPalette?: string;
   onBack: () => void;
 }
+
+// Renders a MapLibre vector style as a Leaflet layer
+const VectorBasemapLayer: React.FC<{ basemap: Basemap }> = ({ basemap }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const layer = maplibreGL({
+      style: basemap.url,
+      attributionControl: { customAttribution: basemap.attribution },
+    }).addTo(map);
+    return () => {
+      layer.remove();
+    };
+  }, [map, basemap]);
+
+  return null;
+};
 
 // Component to handle auto-zoom to data extent
 const MapBoundsInfo: React.FC<{ data: GeoJSONData }> = ({ data }) => {
@@ -352,7 +371,15 @@ export const MapStep: React.FC<MapStepProps> = ({
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
         >
-          <TileLayer attribution={activeBasemap.attribution} url={activeBasemap.url} />
+          {activeBasemap.type === 'vector' ? (
+            <VectorBasemapLayer key={activeBasemapKey} basemap={activeBasemap} />
+          ) : (
+            <TileLayer
+              key={activeBasemapKey}
+              attribution={activeBasemap.attribution}
+              url={activeBasemap.url}
+            />
+          )}
           <GeoJSON
             data={data}
             onEachFeature={onEachFeature}

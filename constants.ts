@@ -1,17 +1,22 @@
 import { Basemap } from './types';
 
+const OPENFREEMAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
+
 export const BASEMAPS: Record<string, Basemap> = {
+  // OpenFreeMap vector styles: open, keyless, and no Referer requirement,
+  // so they also load in exported HTML opened from the local filesystem.
   POSITRON: {
-    name: 'CartoDB Positron',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    name: 'Positron',
+    type: 'vector',
+    url: 'https://tiles.openfreemap.org/styles/positron',
+    attribution: OPENFREEMAP_ATTRIBUTION,
   },
   OSM: {
-    name: 'OpenStreetMap',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    name: 'Liberty',
+    type: 'vector',
+    url: 'https://tiles.openfreemap.org/styles/liberty',
+    attribution: OPENFREEMAP_ATTRIBUTION,
   },
   IMAGERY: {
     name: 'World Imagery',

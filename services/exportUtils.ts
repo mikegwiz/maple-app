@@ -161,6 +161,9 @@ export const generateMapHTML = (
     <title>${title}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -199,17 +202,19 @@ export const generateMapHTML = (
 
         const map = L.map('map');
         
-        // Add Basemap
-        const tileLayer = L.tileLayer(initialBasemap.url, {
-            attribution: initialBasemap.attribution
-        }).addTo(map);
+        // Basemaps: vector styles render via MapLibre GL, others as raster tiles
+        const createBasemapLayer = (def) => def.type === 'vector'
+            ? L.maplibreGL({ style: def.url, attributionControl: { customAttribution: def.attribution } })
+            : L.tileLayer(def.url, { attribution: def.attribution });
 
         // Layer Control
         const baseLayers = {};
         Object.keys(basemapDefinitions).forEach(key => {
             const def = basemapDefinitions[key];
-            baseLayers[def.name] = L.tileLayer(def.url, { attribution: def.attribution });
+            baseLayers[def.name] = createBasemapLayer(def);
         });
+        // Reuse the matching control layer so the selected basemap shows as checked
+        (baseLayers[initialBasemap.name] || createBasemapLayer(initialBasemap)).addTo(map);
         L.control.layers(baseLayers).addTo(map);
 
         // Style functions
