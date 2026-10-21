@@ -7,10 +7,11 @@ import { Download, ArrowLeft, Layers, List, Info, ShieldAlert } from 'lucide-rea
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 
-import { BASEMAPS, COLOR_PALETTES, FEATURE_STYLE } from '../constants';
+import { BASEMAPS, FEATURE_STYLE } from '../constants';
 import { Button } from './Button';
 import { generateMapHTML } from '../services/exportUtils';
-import { GeoJSONData, GeoJSONFeature, Basemap } from '../types';
+import { buildColorScheme, resolveColor } from '../services/symbology';
+import { GeoJSONData, GeoJSONFeature, Basemap, Symbology } from '../types';
 
 
 import 'leaflet/dist/leaflet.css';
@@ -34,8 +35,7 @@ interface MapStepProps {
   data: GeoJSONData;
   title: string;
   selectedFields: string[];
-  colorField?: string | null;
-  colorPalette?: string;
+  symbology: Symbology;
   onBack: () => void;
 }
 
@@ -92,8 +92,7 @@ export const MapStep: React.FC<MapStepProps> = ({
   data,
   title,
   selectedFields,
-  colorField,
-  colorPalette = 'VIBRANT',
+  symbology,
   onBack,
 }) => {
   const [activeBasemapKey, setActiveBasemapKey] = useState<string>('POSITRON');
@@ -102,30 +101,7 @@ export const MapStep: React.FC<MapStepProps> = ({
   const activeBasemap = BASEMAPS[activeBasemapKey];
   const geoJsonRef = useRef<L.GeoJSON>(null);
 
-  // Generate color mapping based on selected colorField and Palette
-  const colorMapping = useMemo(() => {
-    if (!colorField) return {};
-
-    const uniqueValues = new Set<string>();
-    data.features.forEach((f) => {
-      const val = f.properties[colorField];
-      if (val !== undefined && val !== null) {
-        uniqueValues.add(String(val));
-      } else {
-        uniqueValues.add('N/A');
-      }
-    });
-
-    const colors = COLOR_PALETTES[colorPalette] || COLOR_PALETTES['VIBRANT'];
-    const mapping: Record<string, string> = {};
-    Array.from(uniqueValues)
-      .sort()
-      .forEach((val, index) => {
-        mapping[val] = colors[index % colors.length];
-      });
-
-    return mapping;
-  }, [data, colorField, colorPalette]);
+  const { scheme, legend } = useMemo(() => buildColorScheme(data, symbology), [data, symbology]);
 
   const initiateExport = () => {
     setShowExportWarning(true);
@@ -137,8 +113,8 @@ export const MapStep: React.FC<MapStepProps> = ({
       data,
       selectedFields,
       activeBasemap,
-      colorField,
-      colorMapping
+      scheme,
+      legend
     );
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -151,11 +127,8 @@ export const MapStep: React.FC<MapStepProps> = ({
     setShowExportWarning(false);
   };
 
-  const getFeatureColor = (feature: GeoJSONFeature) => {
-    if (!colorField) return FEATURE_STYLE.defaultColor;
-    const val = feature.properties[colorField] ?? 'N/A';
-    return colorMapping[String(val)] || FEATURE_STYLE.unmatchedColor;
-  };
+  const getFeatureColor = (feature?: GeoJSONFeature) =>
+    resolveColor(scheme, feature?.properties ?? null, FEATURE_STYLE);
 
   const onEachFeature = (feature: GeoJSONFeature, layer: L.Layer) => {
     if (feature.properties) {
@@ -213,7 +186,7 @@ export const MapStep: React.FC<MapStepProps> = ({
   };
 
   const pointToLayer = (feature: GeoJSONFeature, latlng: L.LatLng) => {
-    if (colorField) {
+    if (scheme) {
       return L.circleMarker(latlng, { ...FEATURE_STYLE.point, fillColor: getFeatureColor(feature) });
     }
     return L.marker(latlng);
@@ -227,7 +200,7 @@ export const MapStep: React.FC<MapStepProps> = ({
     <div className="flex flex-col h-screen max-h-screen relative">
       {/* Export Warning Modal */}
       {showExportWarning && (
-        <div className="fixed inset-0 z-[1000] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
             <div className="bg-amber-50 p-6 border-b border-amber-100 flex items-start gap-4">
               <div className="p-3 bg-amber-100 rounded-full text-amber-600 flex-shrink-0">
@@ -309,14 +282,14 @@ export const MapStep: React.FC<MapStepProps> = ({
 
       <div className="flex-1 relative bg-slate-50 overflow-hidden">
         {/* Legend */}
-        {colorField && (
+        {scheme && (
           <div
-            className={`absolute bottom-8 left-8 z-[400] bg-white rounded-lg shadow-lg border border-slate-200 max-h-[40vh] overflow-y-auto transition-all duration-300 ${showLegend ? 'w-64' : 'w-auto'}`}
+            className={`absolute bottom-8 left-8 z-[1000] bg-white rounded-lg shadow-lg border border-slate-200 max-h-[40vh] overflow-y-auto transition-all duration-300 ${showLegend ? 'w-64' : 'w-auto'}`}
           >
             <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 sticky top-0">
               {showLegend && (
                 <h4 className="font-bold text-xs uppercase text-slate-500 tracking-wider truncate mr-2">
-                  {colorField}
+                  {scheme.field}
                 </h4>
               )}
               <button
@@ -328,13 +301,13 @@ export const MapStep: React.FC<MapStepProps> = ({
             </div>
             {showLegend && (
               <div className="p-3 space-y-2">
-                {Object.entries(colorMapping).map(([val, color]) => (
-                  <div key={val} className="flex items-center gap-2">
+                {legend.map(({ label, color }) => (
+                  <div key={label} className="flex items-center gap-2">
                     <span
                       className="w-4 h-4 rounded-full shadow-sm flex-shrink-0 border border-black/10"
                       style={{ backgroundColor: color }}
                     ></span>
-                    <span className="text-sm text-slate-700 truncate">{val}</span>
+                    <span className="text-sm text-slate-700 truncate">{label}</span>
                   </div>
                 ))}
               </div>
@@ -343,7 +316,7 @@ export const MapStep: React.FC<MapStepProps> = ({
         )}
 
         {/* Mobile Basemap Switcher (absolute) */}
-        <div className="md:hidden absolute top-4 right-4 z-[400] bg-white rounded-lg shadow-md p-2">
+        <div className="md:hidden absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-md p-2">
           <Layers className="w-6 h-6 text-slate-600" />
           <select
             className="absolute inset-0 opacity-0 cursor-pointer"
@@ -379,7 +352,7 @@ export const MapStep: React.FC<MapStepProps> = ({
             onEachFeature={onEachFeature}
             pointToLayer={pointToLayer}
             style={style}
-            key={JSON.stringify(selectedFields) + colorField + colorPalette} // Force re-render if styling changes
+            key={JSON.stringify([selectedFields, symbology])} // Force re-render if styling changes
           />
           <MapBoundsInfo data={data} layerRef={geoJsonRef} />
         </MapContainer>

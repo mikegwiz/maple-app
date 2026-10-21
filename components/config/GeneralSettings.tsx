@@ -1,26 +1,26 @@
-import { Settings, Palette } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import React from 'react';
 
-import { COLOR_PALETTES } from '../../constants';
+import { SymbologySettings } from './SymbologySettings';
+import { NumericStats, Symbology } from '../../types';
+
 
 interface GeneralSettingsProps {
   title: string;
   setTitle: (title: string) => void;
-  colorField: string;
-  setColorField: (field: string) => void;
-  palette: string;
-  setPalette: (palette: string) => void;
+  symbology: Symbology;
+  onSymbologyChange: (symbology: Symbology) => void;
   availableFields: string[];
+  numericStats: Record<string, NumericStats>;
 }
 
 export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
   title,
   setTitle,
-  colorField,
-  setColorField,
-  palette,
-  setPalette,
+  symbology,
+  onSymbologyChange,
   availableFields,
+  numericStats,
 }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 transition-all hover:shadow-md hover:border-emerald-500/20">
@@ -46,61 +46,12 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           <p className="mt-2 text-xs text-slate-400">Displayed at the top of the map.</p>
         </div>
 
-        {/* Coloring */}
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="color-field"
-              className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"
-            >
-              <Palette className="w-3.5 h-3.5 text-emerald-600" />
-              Color Features By
-            </label>
-            <select
-              id="color-field"
-              value={colorField}
-              onChange={(e) => setColorField(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white cursor-pointer"
-            >
-              <option value="">None (Single Color)</option>
-              {availableFields.map((field) => (
-                <option key={field} value={field}>
-                  {field}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {colorField && (
-            <div>
-              <label
-                htmlFor="palette"
-                className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide"
-              >
-                Palette Scheme
-              </label>
-              <div className="flex items-center gap-3">
-                <select
-                  id="palette"
-                  value={palette}
-                  onChange={(e) => setPalette(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white cursor-pointer"
-                >
-                  {Object.keys(COLOR_PALETTES).map((key) => (
-                    <option key={key} value={key}>
-                      {key.charAt(0) + key.slice(1).toLowerCase()}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex-1 flex gap-0.5 h-9 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                  {COLOR_PALETTES[palette].map((color, i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: color }} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <SymbologySettings
+          symbology={symbology}
+          onChange={onSymbologyChange}
+          availableFields={availableFields}
+          numericStats={numericStats}
+        />
       </div>
     </div>
   );

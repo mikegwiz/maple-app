@@ -3,8 +3,10 @@ import React, { Suspense, lazy, useState } from 'react';
 import { ConfigStep } from './components/ConfigStep';
 import { HomeStep } from './components/HomeStep';
 import { UploadStep } from './components/UploadStep';
+import { DEFAULT_SYMBOLOGY } from './constants';
 import logo from './Maple_Leaf_Green_PNG_Clip_Art_Image.png';
-import { AppState, AppStep, GeoJSONData } from './types';
+import { analyzeNumericFields } from './services/symbology';
+import { AppState, AppStep, GeoJSONData, Symbology } from './types';
 
 // Leaflet and MapLibre are only needed on the map step, so load them on demand
 const MapStep = lazy(() =>
@@ -32,8 +34,8 @@ const App: React.FC = () => {
     availableFields: [],
     selectedFields: [],
     mapTitle: '',
-    colorField: null,
-    colorPalette: 'VIBRANT',
+    numericStats: {},
+    symbology: DEFAULT_SYMBOLOGY,
   });
 
   const handleStart = () => setState((s) => ({ ...s, step: AppStep.UPLOAD }));
@@ -53,24 +55,18 @@ const App: React.FC = () => {
       availableFields: sortedFields,
       selectedFields: sortedFields.slice(0, 5),
       mapTitle: filename.split('.')[0] || 'My Map',
-      colorField: null,
-      colorPalette: 'VIBRANT',
+      numericStats: analyzeNumericFields(data, sortedFields),
+      symbology: DEFAULT_SYMBOLOGY,
     }));
   };
 
-  const handleConfigComplete = (
-    title: string,
-    selectedFields: string[],
-    colorField: string | null,
-    palette: string
-  ) => {
+  const handleConfigComplete = (title: string, selectedFields: string[], symbology: Symbology) => {
     setState((prev) => ({
       ...prev,
       step: AppStep.MAP,
       mapTitle: title,
       selectedFields,
-      colorField,
-      colorPalette: palette,
+      symbology,
     }));
   };
 
@@ -118,8 +114,8 @@ const App: React.FC = () => {
               availableFields={state.availableFields}
               initialTitle={state.mapTitle}
               initialSelectedFields={state.selectedFields}
-              initialColorField={state.colorField}
-              initialPalette={state.colorPalette}
+              numericStats={state.numericStats}
+              initialSymbology={state.symbology}
               onBack={handleBack}
               onComplete={handleConfigComplete}
             />
@@ -137,8 +133,7 @@ const App: React.FC = () => {
                 data={state.data}
                 title={state.mapTitle}
                 selectedFields={state.selectedFields}
-                colorField={state.colorField}
-                colorPalette={state.colorPalette}
+                symbology={state.symbology}
                 onBack={handleBack}
               />
             </Suspense>

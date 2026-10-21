@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, List } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 import { Button } from './Button';
+import { NumericStats, Symbology } from '../types';
 import { AvailableFieldList } from './config/AvailableFieldList';
 import { GeneralSettings } from './config/GeneralSettings';
 import { SelectedFieldList } from './config/SelectedFieldList';
@@ -10,23 +11,18 @@ interface ConfigStepProps {
   availableFields: string[];
   initialTitle: string;
   initialSelectedFields: string[];
-  initialColorField?: string | null;
-  initialPalette?: string;
+  numericStats: Record<string, NumericStats>;
+  initialSymbology: Symbology;
   onBack: () => void;
-  onComplete: (
-    title: string,
-    selectedFields: string[],
-    colorField: string | null,
-    palette: string
-  ) => void;
+  onComplete: (title: string, selectedFields: string[], symbology: Symbology) => void;
 }
 
 export const ConfigStep: React.FC<ConfigStepProps> = ({
   availableFields,
   initialTitle,
   initialSelectedFields,
-  initialColorField,
-  initialPalette,
+  numericStats,
+  initialSymbology,
   onBack,
   onComplete,
 }) => {
@@ -35,9 +31,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
   const [selectedFields, setSelectedFields] = useState<string[]>(
     initialSelectedFields.length > 0 ? initialSelectedFields : availableFields.slice(0, 5)
   );
-  // State for symbol color category
-  const [colorField, setColorField] = useState<string>(initialColorField || '');
-  const [palette, setPalette] = useState<string>(initialPalette || 'VIBRANT');
+  const [symbology, setSymbology] = useState<Symbology>(initialSymbology);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
@@ -103,7 +97,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
       alert('Please enter a map title');
       return;
     }
-    onComplete(title, selectedFields, colorField || null, palette);
+    onComplete(title, selectedFields, symbology);
   };
 
   // Fields that are not yet selected
@@ -130,11 +124,10 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
         <GeneralSettings
           title={title}
           setTitle={setTitle}
-          colorField={colorField}
-          setColorField={setColorField}
-          palette={palette}
-          setPalette={setPalette}
+          symbology={symbology}
+          onSymbologyChange={setSymbology}
           availableFields={availableFields}
+          numericStats={numericStats}
         />
 
         {/* Unified Popup Section */}

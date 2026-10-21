@@ -1,5 +1,6 @@
 import { BASEMAPS, FEATURE_STYLE } from '../constants';
 import { GeoJSONData, Basemap } from '../types';
+import { ColorScheme, LegendItem, resolveColor } from './symbology';
 
 const escapeHtml = (value: unknown) =>
     String(value)
@@ -120,22 +121,22 @@ const MAP_STYLES = `
 /**
  * Generates the HTML for the legend control if coloring is enabled.
  */
-const getLegendHTML = (colorField?: string | null, colorMapping?: Record<string, string>) => {
-    if (!colorField || !colorMapping) return '';
+const getLegendHTML = (scheme: ColorScheme | null, legend: LegendItem[]) => {
+    if (!scheme) return '';
 
     return `
       <div id="legend" class="legend-control">
         <div class="legend-header">
-           <span>${escapeHtml(colorField)}</span>
+           <span>${escapeHtml(scheme.field)}</span>
            <button onclick="toggleLegend()">_</button>
         </div>
         <div id="legend-content">
-          ${Object.entries(colorMapping)
+          ${legend
             .map(
-                ([val, color]) => `
+                ({ label, color }) => `
              <div class="legend-item">
                <span class="legend-color" style="background-color: ${escapeHtml(color)}"></span>
-               <span class="legend-label">${escapeHtml(val)}</span>
+               <span class="legend-label">${escapeHtml(label)}</span>
              </div>
           `
             )
@@ -150,13 +151,12 @@ export const generateMapHTML = (
     data: GeoJSONData,
     selectedFields: string[],
     activeBasemap: Basemap,
-    colorField?: string | null,
-    colorMapping?: Record<string, string>
+    scheme: ColorScheme | null,
+    legend: LegendItem[]
 ): string => {
-    const hasColoring = colorField && colorMapping;
     const safeTitle = escapeHtml(title);
 
-    const legendHtml = getLegendHTML(colorField, colorMapping);
+    const legendHtml = getLegendHTML(scheme, legend);
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -193,9 +193,10 @@ export const generateMapHTML = (
         const displayFields = ${toScriptJSON(selectedFields)};
         const initialBasemapName = ${toScriptJSON(activeBasemap.name)};
         const basemapDefinitions = ${toScriptJSON(BASEMAPS)};
-        const colorField = ${hasColoring ? toScriptJSON(colorField) : 'null'};
-        const colorMapping = ${hasColoring ? toScriptJSON(colorMapping) : '{}'};
+        const colorScheme = ${toScriptJSON(scheme)};
         const featureStyle = ${toScriptJSON(FEATURE_STYLE)};
+        // Same color logic as the MAPLE app
+        const resolveColor = ${resolveColor.toString()};
 
         const escapeHtml = (value) => String(value)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -228,14 +229,11 @@ export const generateMapHTML = (
         L.control.layers(baseLayers).addTo(map);
 
         // Style functions
-        const getFeatureColor = (feature) => {
-            if (!colorField) return featureStyle.defaultColor;
-            const val = feature.properties[colorField] ?? "N/A";
-            return colorMapping[String(val)] || featureStyle.unmatchedColor;
-        };
+        const getFeatureColor = (feature) =>
+            resolveColor(colorScheme, feature ? feature.properties : null, featureStyle);
 
         const pointToLayer = (feature, latlng) => {
-            if (colorField) {
+            if (colorScheme) {
                 return L.circleMarker(latlng, { ...featureStyle.point, fillColor: getFeatureColor(feature) });
             }
             return L.marker(latlng);

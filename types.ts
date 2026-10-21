@@ -17,8 +17,34 @@ export interface AppState {
   availableFields: string[];
   selectedFields: string[];
   mapTitle: string;
-  colorField?: string | null;
-  colorPalette?: string;
+  numericStats: Record<string, NumericStats>;
+  symbology: Symbology;
+}
+
+// 'categorical' colors each unique value; 'sequential' colors numeric ranges along a ramp;
+// 'diverging' colors numeric ranges outward from a midpoint
+export type ColorMode = 'categorical' | 'sequential' | 'diverging';
+export type ClassificationMethod = 'jenks' | 'quantile' | 'equal';
+export type MidpointMode = 'zero' | 'mean' | 'median' | 'custom';
+
+export interface NumericStats {
+  min: number;
+  max: number;
+  mean: number;
+  median: number;
+}
+
+export interface Symbology {
+  field: string | null;
+  mode: ColorMode;
+  categoricalPalette: string;
+  sequentialPalette: string;
+  divergingPalette: string;
+  classes: number;
+  method: ClassificationMethod;
+  midpoint: MidpointMode;
+  customMidpoint: number;
+  reverse: boolean;
 }
 
 export interface Basemap {
