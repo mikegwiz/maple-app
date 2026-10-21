@@ -26,11 +26,12 @@ export const BASEMAPS: Record<string, Basemap> = {
   },
 };
 
-export const ACCEPTED_FILE_TYPES = {
-  'application/json': ['.json', '.geojson'],
-  'text/csv': ['.csv'],
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-  'application/vnd.ms-excel': ['.xls'],
+// Feature styling shared by the in-app map and the exported HTML
+export const FEATURE_STYLE = {
+  defaultColor: '#059669', // emerald-600, used when no color field is set
+  unmatchedColor: '#94a3b8', // slate-400, for values missing from the color mapping
+  point: { radius: 8, color: '#000', weight: 1, opacity: 1, fillOpacity: 0.8 },
+  shape: { weight: 1.5, opacity: 1, color: '#000', fillOpacity: 0.7 },
 };
 
 export const COLOR_PALETTES: Record<string, string[]> = {

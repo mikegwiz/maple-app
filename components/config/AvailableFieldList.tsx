@@ -1,5 +1,5 @@
-import React from 'react';
 import { Plus } from 'lucide-react';
+import React from 'react';
 
 interface AvailableFieldListProps {
   unselectedFields: string[];
@@ -15,7 +15,7 @@ export const AvailableFieldList: React.FC<AvailableFieldListProps> = ({
       <div className="shrink-0 p-3 bg-slate-50/80 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
         Available Variables
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0 p-2 space-y-1 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 p-2 space-y-1">
         {unselectedFields.length === 0 ? (
           <p className="text-center text-slate-300 py-10 text-sm italic">All variables selected</p>
         ) : (

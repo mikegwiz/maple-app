@@ -1,12 +1,12 @@
-import React from 'react';
 import { ArrowUp, ArrowDown, X, GripVertical } from 'lucide-react';
+import React from 'react';
 
 interface SelectedFieldListProps {
   selectedFields: string[];
   onRemoveField: (field: string) => void;
   onMoveField: (index: number, direction: 'up' | 'down') => void;
   onDragStart: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
-  onDragEnter: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
+  onDragEnter: (index: number) => void;
   onDragEnd: () => void;
 }
 
@@ -26,7 +26,7 @@ export const SelectedFieldList: React.FC<SelectedFieldListProps> = ({
           Drag or use arrows
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2">
         {selectedFields.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 border-2 border-dashed border-slate-200 rounded-xl m-4 bg-slate-50">
             <GripVertical className="w-10 h-10 mb-2 opacity-20" />
@@ -39,7 +39,7 @@ export const SelectedFieldList: React.FC<SelectedFieldListProps> = ({
               key={field}
               draggable
               onDragStart={(e) => onDragStart(e, index)}
-              onDragEnter={(e) => onDragEnter(e, index)}
+              onDragEnter={() => onDragEnter(index)}
               onDragEnd={onDragEnd}
               onDragOver={(e) => e.preventDefault()}
               className="group flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-emerald-500/30 transition-all cursor-move hover:shadow-md active:cursor-grabbing"

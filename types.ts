@@ -1,16 +1,8 @@
-export interface GeoJSONFeature {
-  type: 'Feature';
-  geometry: {
-    type: string;
-    coordinates: any;
-  };
-  properties: Record<string, any>;
-}
+import type { Feature, FeatureCollection, Geometry } from 'geojson';
 
-export interface GeoJSONData {
-  type: 'FeatureCollection';
-  features: GeoJSONFeature[];
-}
+export type FeatureProperties = Record<string, unknown>;
+export type GeoJSONFeature = Feature<Geometry, FeatureProperties>;
+export type GeoJSONData = FeatureCollection<Geometry, FeatureProperties>;
 
 export enum AppStep {
   HOME = 'HOME',
@@ -22,7 +14,6 @@ export enum AppStep {
 export interface AppState {
   step: AppStep;
   data: GeoJSONData | null;
-  filename: string;
   availableFields: string[];
   selectedFields: string[];
   mapTitle: string;

@@ -1,6 +1,8 @@
-import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { GeoJSONData, GeoJSONFeature } from '../types';
+
+import { FeatureProperties, GeoJSONData, GeoJSONFeature } from '../types';
+
+type Row = FeatureProperties;
 
 export interface ParsedDataResult {
   data: GeoJSONData;
@@ -44,7 +46,7 @@ const parseGeoJSON = (file: File): Promise<ParsedDataResult> => {
           try {
             const result = rowsToGeoJSON(json);
             resolve(result);
-          } catch (rowError) {
+          } catch {
             reject(
               new Error(
                 'JSON array must contain objects with valid latitude/longitude fields (e.g. lat/lon).'
@@ -67,19 +69,19 @@ const parseGeoJSON = (file: File): Promise<ParsedDataResult> => {
   });
 };
 
-const isValidLat = (val: any) => {
+const isValidLat = (val: unknown) => {
   if (val === null || val === undefined || String(val).trim() === '') return false;
   const num = Number(val);
   return !isNaN(num) && num >= -90 && num <= 90;
 };
 
-const isValidLon = (val: any) => {
+const isValidLon = (val: unknown) => {
   if (val === null || val === undefined || String(val).trim() === '') return false;
   const num = Number(val);
   return !isNaN(num) && num >= -180 && num <= 180;
 };
 
-const detectCoordinateColumns = (rows: any[]): { latKey?: string; lonKey?: string } => {
+const detectCoordinateColumns = (rows: Row[]): { latKey?: string; lonKey?: string } => {
   if (!rows || rows.length === 0) return {};
 
   const headers = Object.keys(rows[0]);
@@ -92,7 +94,7 @@ const detectCoordinateColumns = (rows: any[]): { latKey?: string; lonKey?: strin
   let latCandidates = headers.filter((h) => latRegex.test(h));
   let lonCandidates = headers.filter((h) => lonRegex.test(h));
 
-  const validate = (key: string, checker: (v: any) => boolean) => {
+  const validate = (key: string, checker: (v: unknown) => boolean) => {
     let hasValidData = false;
     for (const row of sample) {
       const val = row[key];
@@ -128,7 +130,7 @@ const detectCoordinateColumns = (rows: any[]): { latKey?: string; lonKey?: strin
   };
 };
 
-const rowsToGeoJSON = (rows: any[]): ParsedDataResult => {
+const rowsToGeoJSON = (rows: Row[]): ParsedDataResult => {
   const { latKey, lonKey } = detectCoordinateColumns(rows);
 
   if (!latKey || !lonKey) {
@@ -140,8 +142,8 @@ const rowsToGeoJSON = (rows: any[]): ParsedDataResult => {
   const features: GeoJSONFeature[] = [];
 
   rows.forEach((row) => {
-    const lat = parseFloat(row[latKey]);
-    const lon = parseFloat(row[lonKey]);
+    const lat = parseFloat(String(row[latKey]));
+    const lon = parseFloat(String(row[lonKey]));
 
     if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
       features.push({
@@ -182,12 +184,14 @@ const parseCSV = (file: File): Promise<ParsedDataResult> => {
           reject(e);
         }
       },
-      error: (error: any) => reject(error),
+      error: (error: Error) => reject(error),
     });
   });
 };
 
-const parseExcel = (file: File): Promise<ParsedDataResult> => {
+const parseExcel = async (file: File): Promise<ParsedDataResult> => {
+  // SheetJS is large, so only load it when an Excel file is actually opened
+  const XLSX = await import('xlsx');
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -196,7 +200,7 @@ const parseExcel = (file: File): Promise<ParsedDataResult> => {
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet);
+        const json = XLSX.utils.sheet_to_json<Row>(worksheet);
         const result = rowsToGeoJSON(json);
         resolve(result);
       } catch (err) {

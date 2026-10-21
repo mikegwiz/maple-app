@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
-import { UploadStep } from './components/UploadStep';
+import React, { Suspense, lazy, useState } from 'react';
+
 import { ConfigStep } from './components/ConfigStep';
-import { MapStep } from './components/MapStep';
 import { HomeStep } from './components/HomeStep';
-import { AppState, AppStep, GeoJSONData } from './types';
+import { UploadStep } from './components/UploadStep';
 import logo from './Maple_Leaf_Green_PNG_Clip_Art_Image.png';
+import { AppState, AppStep, GeoJSONData } from './types';
+
+// Leaflet and MapLibre are only needed on the map step, so load them on demand
+const MapStep = lazy(() =>
+  import('./components/MapStep').then((m) => ({ default: m.MapStep }))
+);
+
+// Nav used for all steps besides Home and Map
+const InternalNav: React.FC<{ onHome: () => void }> = ({ onHome }) => (
+  <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-center h-16">
+        <button type="button" className="flex items-center gap-2" onClick={onHome}>
+          <img src={logo} alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
+          <span className="font-bold text-xl tracking-tight text-slate-900">MAPLE</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+);
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     step: AppStep.HOME,
     data: null,
-    filename: '',
     availableFields: [],
     selectedFields: [],
     mapTitle: '',
@@ -18,16 +36,10 @@ const App: React.FC = () => {
     colorPalette: 'VIBRANT',
   });
 
-  const handleStart = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    setState((s) => ({ ...s, step: AppStep.UPLOAD }));
-  };
+  const handleStart = () => setState((s) => ({ ...s, step: AppStep.UPLOAD }));
 
   const handleDataLoaded = (data: GeoJSONData, filename: string) => {
     const fields = new Set<string>();
-    if (data.features.length > 0) {
-      Object.keys(data.features[0].properties || {}).forEach((k) => fields.add(k));
-    }
     data.features.slice(0, 10).forEach((f) => {
       Object.keys(f.properties || {}).forEach((k) => fields.add(k));
     });
@@ -38,7 +50,6 @@ const App: React.FC = () => {
       ...prev,
       step: AppStep.CONFIG,
       data,
-      filename,
       availableFields: sortedFields,
       selectedFields: sortedFields.slice(0, 5),
       mapTitle: filename.split('.')[0] || 'My Map',
@@ -72,23 +83,11 @@ const App: React.FC = () => {
     });
   };
 
-  // Nav used for all steps besides Home and Map
-  const InternalNav = () => (
-    <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm animate-in slide-in-from-top-4 duration-500">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setState(s => ({ ...s, step: AppStep.HOME }))}>
-            <img src={logo} alt="MAPLE Logo" className="w-9 h-9 object-contain drop-shadow-sm" />
-            <span className="font-bold text-xl tracking-tight text-slate-900">MAPLE</span>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
+  const goHome = () => setState((s) => ({ ...s, step: AppStep.HOME }));
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-emerald-200 selection:text-emerald-900 font-['Plus_Jakarta_Sans',sans-serif] flex flex-col">
-      {state.step !== AppStep.MAP && state.step !== AppStep.HOME && <InternalNav />}
+      {state.step !== AppStep.MAP && state.step !== AppStep.HOME && <InternalNav onHome={goHome} />}
 
       {state.step === AppStep.HOME ? (
         <HomeStep onStart={handleStart} />
@@ -101,7 +100,7 @@ const App: React.FC = () => {
           }
         >
           {state.step === AppStep.UPLOAD && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col justify-center">
               <UploadStep onDataLoaded={handleDataLoaded} />
               <div className="mt-8 text-center">
                 <button
@@ -116,7 +115,6 @@ const App: React.FC = () => {
 
           {state.step === AppStep.CONFIG && (
             <ConfigStep
-              filename={state.filename}
               availableFields={state.availableFields}
               initialTitle={state.mapTitle}
               initialSelectedFields={state.selectedFields}
@@ -128,14 +126,22 @@ const App: React.FC = () => {
           )}
 
           {state.step === AppStep.MAP && state.data && (
-            <MapStep
-              data={state.data}
-              title={state.mapTitle}
-              selectedFields={state.selectedFields}
-              colorField={state.colorField}
-              colorPalette={state.colorPalette}
-              onBack={handleBack}
-            />
+            <Suspense
+              fallback={
+                <div className="h-full flex items-center justify-center text-slate-400">
+                  Loading map…
+                </div>
+              }
+            >
+              <MapStep
+                data={state.data}
+                title={state.mapTitle}
+                selectedFields={state.selectedFields}
+                colorField={state.colorField}
+                colorPalette={state.colorPalette}
+                onBack={handleBack}
+              />
+            </Suspense>
           )}
         </main>
       )}

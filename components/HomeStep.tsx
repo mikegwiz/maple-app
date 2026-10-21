@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
 import { ArrowRight, Menu, UploadCloud, SlidersHorizontal, MousePointerClick, ShieldCheck, Map as MapIcon, Palette } from 'lucide-react';
+import React, { useState } from 'react';
+
 import logo from '../Maple_Leaf_Green_PNG_Clip_Art_Image.png';
 
 interface HomeStepProps {
@@ -39,7 +40,7 @@ export const HomeStep: React.FC<HomeStepProps> = ({ onStart }) => {
 
                 {/* Mobile Dropdown */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2">
+                    <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-lg">
                         <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-emerald-600 hover:bg-emerald-50">How it Works</a>
                         <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-emerald-600 hover:bg-emerald-50">Features</a>
                     </div>
@@ -73,7 +74,7 @@ export const HomeStep: React.FC<HomeStepProps> = ({ onStart }) => {
 
                     {/* Subheadline */}
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Whether you're a student, journalist, or researcher, MAPLE helps you instantly visualize spatial data directly in your browser. No complex GIS software required.
+                        Whether you&apos;re a student, journalist, or researcher, MAPLE helps you instantly visualize spatial data directly in your browser. No complex GIS software required.
                     </p>
 
                     {/* CTAs */}
@@ -134,7 +135,7 @@ export const HomeStep: React.FC<HomeStepProps> = ({ onStart }) => {
                                 <MousePointerClick className="w-8 h-8" />
                             </div>
                             <h3 className="text-xl font-bold text-slate-900 mb-3">3. Explore & Export</h3>
-                            <p className="text-slate-600 leading-relaxed">Interact with your dynamic map. Click on features to inspect their attributes, pan around, and export the view when you're done.</p>
+                            <p className="text-slate-600 leading-relaxed">Interact with your dynamic map. Click on features to inspect their attributes, pan around, and export the view when you&apos;re done.</p>
                         </div>
                     </div>
                 </div>

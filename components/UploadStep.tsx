@@ -1,4 +1,3 @@
-import React, { useCallback, useState } from 'react';
 import {
   AlertCircle,
   Loader2,
@@ -9,6 +8,8 @@ import {
   ArrowRight,
   X,
 } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+
 import { parseFile, ParsedDataResult } from '../services/fileUtils';
 import { GeoJSONData } from '../types';
 import { Button } from './Button';
@@ -38,8 +39,8 @@ export const UploadStep: React.FC<UploadStepProps> = ({ onDataLoaded }) => {
         filename: file.name,
         result: result,
       });
-    } catch (err: any) {
-      setError(err.message || 'Failed to process file');
+    } catch (err) {
+      setError((err instanceof Error && err.message) || 'Failed to process file');
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({ onDataLoaded }) => {
 
       {/* Staged File Review Card */}
       {stagedFile ? (
-        <div className="bg-white rounded-xl shadow-lg border border-emerald-500/20 overflow-hidden animate-in slide-in-from-bottom-2 duration-500">
+        <div className="bg-white rounded-xl shadow-lg border border-emerald-500/20 overflow-hidden">
           <div className="bg-emerald-500/10 p-4 border-b border-emerald-500/20 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-600 rounded-full text-white">
@@ -192,7 +193,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({ onDataLoaded }) => {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           className={`
-            relative border-3 border-dashed rounded-xl p-12 transition-all duration-300
+            relative border-2 border-dashed rounded-xl p-12 transition-all duration-300
             flex flex-col items-center justify-center gap-4 bg-white cursor-pointer
             ${isDragging
               ? 'border-emerald-500 bg-emerald-500/5 scale-[1.01]'
@@ -217,7 +218,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({ onDataLoaded }) => {
             <p className="text-sm text-slate-400">or click to browse</p>
           </div>
 
-          <label className="absolute inset-0 cursor-pointer">
+          <label className="absolute inset-0 cursor-pointer" aria-label="Choose a data file">
             <input
               type="file"
               className="hidden"
@@ -240,7 +241,7 @@ export const UploadStep: React.FC<UploadStepProps> = ({ onDataLoaded }) => {
       )}
 
       {error && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700 animate-in slide-in-from-top-2">
+        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm font-medium">{error}</p>
         </div>

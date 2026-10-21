@@ -1,5 +1,16 @@
+import { BASEMAPS, FEATURE_STYLE } from '../constants';
 import { GeoJSONData, Basemap } from '../types';
-import { BASEMAPS } from '../constants';
+
+const escapeHtml = (value: unknown) =>
+    String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+// JSON that is safe to embed in a <script> block (a literal "</script>" in the data can't end it)
+const toScriptJSON = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
 
 const MAP_STYLES = `
     body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -115,7 +126,7 @@ const getLegendHTML = (colorField?: string | null, colorMapping?: Record<string,
     return `
       <div id="legend" class="legend-control">
         <div class="legend-header">
-           <span>${colorField}</span>
+           <span>${escapeHtml(colorField)}</span>
            <button onclick="toggleLegend()">_</button>
         </div>
         <div id="legend-content">
@@ -123,8 +134,8 @@ const getLegendHTML = (colorField?: string | null, colorMapping?: Record<string,
             .map(
                 ([val, color]) => `
              <div class="legend-item">
-               <span class="legend-color" style="background-color: ${color}"></span>
-               <span class="legend-label">${val}</span>
+               <span class="legend-color" style="background-color: ${escapeHtml(color)}"></span>
+               <span class="legend-label">${escapeHtml(val)}</span>
              </div>
           `
             )
@@ -142,14 +153,8 @@ export const generateMapHTML = (
     colorField?: string | null,
     colorMapping?: Record<string, string>
 ): string => {
-    const serializedData = JSON.stringify(data);
-    const serializedFields = JSON.stringify(selectedFields);
-    const serializedBasemap = JSON.stringify(activeBasemap);
-    const allBasemaps = JSON.stringify(BASEMAPS);
-
     const hasColoring = colorField && colorMapping;
-    const serializedColorMap = hasColoring ? JSON.stringify(colorMapping) : '{}';
-    const serializedColorField = hasColoring ? JSON.stringify(colorField) : 'null';
+    const safeTitle = escapeHtml(title);
 
     const legendHtml = getLegendHTML(colorField, colorMapping);
 
@@ -158,7 +163,7 @@ export const generateMapHTML = (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>${safeTitle}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
@@ -172,7 +177,7 @@ export const generateMapHTML = (
 </head>
 <body>
     <div id="map"></div>
-    <div class="map-title">${title}</div>
+    <div class="map-title">${safeTitle}</div>
     <div class="maple-branding">
         <div class="maple-title">MAPLE</div>
         <div class="social-links">
@@ -184,12 +189,17 @@ export const generateMapHTML = (
     ${legendHtml}
 
     <script>
-        const geoData = ${serializedData};
-        const displayFields = ${serializedFields};
-        const initialBasemap = ${serializedBasemap};
-        const basemapDefinitions = ${allBasemaps};
-        const colorField = ${serializedColorField};
-        const colorMapping = ${serializedColorMap};
+        const geoData = ${toScriptJSON(data)};
+        const displayFields = ${toScriptJSON(selectedFields)};
+        const initialBasemapName = ${toScriptJSON(activeBasemap.name)};
+        const basemapDefinitions = ${toScriptJSON(BASEMAPS)};
+        const colorField = ${hasColoring ? toScriptJSON(colorField) : 'null'};
+        const colorMapping = ${hasColoring ? toScriptJSON(colorMapping) : '{}'};
+        const featureStyle = ${toScriptJSON(FEATURE_STYLE)};
+
+        const escapeHtml = (value) => String(value)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
         function toggleLegend() {
            const content = document.getElementById('legend-content');
@@ -214,38 +224,25 @@ export const generateMapHTML = (
             baseLayers[def.name] = createBasemapLayer(def);
         });
         // Reuse the matching control layer so the selected basemap shows as checked
-        (baseLayers[initialBasemap.name] || createBasemapLayer(initialBasemap)).addTo(map);
+        baseLayers[initialBasemapName].addTo(map);
         L.control.layers(baseLayers).addTo(map);
 
         // Style functions
         const getFeatureColor = (feature) => {
-            if (!colorField) return '#059669';
+            if (!colorField) return featureStyle.defaultColor;
             const val = feature.properties[colorField] ?? "N/A";
-            return colorMapping[String(val)] || '#94a3b8';
+            return colorMapping[String(val)] || featureStyle.unmatchedColor;
         };
 
         const pointToLayer = (feature, latlng) => {
             if (colorField) {
-                return L.circleMarker(latlng, {
-                    radius: 8,
-                    fillColor: getFeatureColor(feature),
-                    color: '#000',
-                    weight: 1,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                });
+                return L.circleMarker(latlng, { ...featureStyle.point, fillColor: getFeatureColor(feature) });
             }
             return L.marker(latlng);
         };
 
         const style = (feature) => {
-             return {
-                fillColor: getFeatureColor(feature),
-                weight: 1.5,
-                opacity: 1,
-                color: '#000',
-                fillOpacity: 0.7
-             };
+             return { ...featureStyle.shape, fillColor: getFeatureColor(feature) };
         };
 
         // Add Data
@@ -270,8 +267,8 @@ export const generateMapHTML = (
                         if (val !== undefined && val !== null && String(val).trim() !== "") {
                             popupContent += \`
                                 <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
-                                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 2px;">\${field}</div>
-                                    <div style="font-size: 14px; color: #334155; font-weight: 500; line-height: 1.4; word-break: break-word;">\${val}</div>
+                                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 2px;">\${escapeHtml(field)}</div>
+                                    <div style="font-size: 14px; color: #334155; font-weight: 500; line-height: 1.4; word-break: break-word;">\${escapeHtml(val)}</div>
                                 </div>
                             \`;
                         }

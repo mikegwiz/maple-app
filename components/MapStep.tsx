@@ -1,23 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import { maplibreGL } from '@maplibre/maplibre-gl-leaflet';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { GeoJSONData, Basemap } from '../types';
-import { BASEMAPS, COLOR_PALETTES } from '../constants';
-import { generateMapHTML } from '../services/exportUtils';
+import L from 'leaflet';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+import { Download, ArrowLeft, Layers, List, Info, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+
+import { BASEMAPS, COLOR_PALETTES, FEATURE_STYLE } from '../constants';
 import { Button } from './Button';
-import { Download, ArrowLeft, Layers, List, Info, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { generateMapHTML } from '../services/exportUtils';
+import { GeoJSONData, GeoJSONFeature, Basemap } from '../types';
 
-// Fix for Leaflet default icon issues in React
-const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
-const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
-const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 
-let DefaultIcon = L.icon({
-  iconUrl: iconUrl,
-  iconRetinaUrl: iconRetinaUrl,
-  shadowUrl: shadowUrl,
+import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+// Fix for Leaflet default icon issues in bundlers
+const DefaultIcon = L.icon({
+  iconUrl,
+  iconRetinaUrl,
+  shadowUrl,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -53,8 +56,11 @@ const VectorBasemapLayer: React.FC<{ basemap: Basemap }> = ({ basemap }) => {
   return null;
 };
 
-// Component to handle auto-zoom to data extent
-const MapBoundsInfo: React.FC<{ data: GeoJSONData }> = ({ data }) => {
+// Component to handle auto-zoom to data extent, using the already-rendered data layer
+const MapBoundsInfo: React.FC<{ data: GeoJSONData; layerRef: React.RefObject<L.GeoJSON> }> = ({
+  data,
+  layerRef,
+}) => {
   const map = useMap();
 
   useEffect(() => {
@@ -62,9 +68,8 @@ const MapBoundsInfo: React.FC<{ data: GeoJSONData }> = ({ data }) => {
       const timer = setTimeout(() => {
         try {
           map.invalidateSize();
-          const layer = L.geoJSON(data);
-          const bounds = layer.getBounds();
-          if (bounds.isValid()) {
+          const bounds = layerRef.current?.getBounds();
+          if (bounds?.isValid()) {
             map.fitBounds(bounds, {
               padding: [50, 50],
               maxZoom: 16,
@@ -78,7 +83,7 @@ const MapBoundsInfo: React.FC<{ data: GeoJSONData }> = ({ data }) => {
 
       return () => clearTimeout(timer);
     }
-  }, [data, map]);
+  }, [data, map, layerRef]);
 
   return null;
 };
@@ -95,6 +100,7 @@ export const MapStep: React.FC<MapStepProps> = ({
   const [showLegend, setShowLegend] = useState(true);
   const [showExportWarning, setShowExportWarning] = useState(false);
   const activeBasemap = BASEMAPS[activeBasemapKey];
+  const geoJsonRef = useRef<L.GeoJSON>(null);
 
   // Generate color mapping based on selected colorField and Palette
   const colorMapping = useMemo(() => {
@@ -145,13 +151,13 @@ export const MapStep: React.FC<MapStepProps> = ({
     setShowExportWarning(false);
   };
 
-  const getFeatureColor = (feature: any) => {
-    if (!colorField) return '#059669'; // Emerald-600
+  const getFeatureColor = (feature: GeoJSONFeature) => {
+    if (!colorField) return FEATURE_STYLE.defaultColor;
     const val = feature.properties[colorField] ?? 'N/A';
-    return colorMapping[String(val)] || '#94a3b8';
+    return colorMapping[String(val)] || FEATURE_STYLE.unmatchedColor;
   };
 
-  const onEachFeature = (feature: any, layer: L.Layer) => {
+  const onEachFeature = (feature: GeoJSONFeature, layer: L.Layer) => {
     if (feature.properties) {
       const color = getFeatureColor(feature);
       const content = document.createElement('div');
@@ -206,36 +212,23 @@ export const MapStep: React.FC<MapStepProps> = ({
     }
   };
 
-  const pointToLayer = (feature: any, latlng: L.LatLng) => {
+  const pointToLayer = (feature: GeoJSONFeature, latlng: L.LatLng) => {
     if (colorField) {
-      return L.circleMarker(latlng, {
-        radius: 8,
-        fillColor: getFeatureColor(feature),
-        color: '#000',
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8,
-      });
+      return L.circleMarker(latlng, { ...FEATURE_STYLE.point, fillColor: getFeatureColor(feature) });
     }
     return L.marker(latlng);
   };
 
-  const style = (feature: any) => {
-    return {
-      fillColor: getFeatureColor(feature),
-      weight: 1.5,
-      opacity: 1,
-      color: '#000',
-      fillOpacity: 0.7,
-    };
+  const style = (feature?: GeoJSONFeature) => {
+    return { ...FEATURE_STYLE.shape, fillColor: getFeatureColor(feature) };
   };
 
   return (
     <div className="flex flex-col h-screen max-h-screen relative">
       {/* Export Warning Modal */}
       {showExportWarning && (
-        <div className="fixed inset-0 z-[1000] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[1000] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
             <div className="bg-amber-50 p-6 border-b border-amber-100 flex items-start gap-4">
               <div className="p-3 bg-amber-100 rounded-full text-amber-600 flex-shrink-0">
                 <ShieldAlert className="w-8 h-8" />
@@ -381,13 +374,14 @@ export const MapStep: React.FC<MapStepProps> = ({
             />
           )}
           <GeoJSON
+            ref={geoJsonRef}
             data={data}
             onEachFeature={onEachFeature}
             pointToLayer={pointToLayer}
             style={style}
             key={JSON.stringify(selectedFields) + colorField + colorPalette} // Force re-render if styling changes
           />
-          <MapBoundsInfo data={data} />
+          <MapBoundsInfo data={data} layerRef={geoJsonRef} />
         </MapContainer>
       </div>
     </div>

@@ -1,10 +1,5 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
@@ -14,11 +9,5 @@ export default defineConfig({
   server: {
     port: 3010,
     host: '0.0.0.0',
-  },
-
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, '.'),
-    },
   },
 });

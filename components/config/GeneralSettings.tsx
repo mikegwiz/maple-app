@@ -1,5 +1,6 @@
-import React from 'react';
 import { Settings, Palette } from 'lucide-react';
+import React from 'react';
+
 import { COLOR_PALETTES } from '../../constants';
 
 interface GeneralSettingsProps {
@@ -31,8 +32,11 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Map Title */}
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Map Title</label>
+          <label htmlFor="map-title" className="block text-sm font-bold text-slate-700 mb-2">
+            Map Title
+          </label>
           <input
+            id="map-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -45,11 +49,15 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
         {/* Coloring */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+            <label
+              htmlFor="color-field"
+              className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"
+            >
               <Palette className="w-3.5 h-3.5 text-emerald-600" />
               Color Features By
             </label>
             <select
+              id="color-field"
               value={colorField}
               onChange={(e) => setColorField(e.target.value)}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white cursor-pointer"
@@ -64,12 +72,16 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
           </div>
 
           {colorField && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+            <div>
+              <label
+                htmlFor="palette"
+                className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide"
+              >
                 Palette Scheme
               </label>
               <div className="flex items-center gap-3">
                 <select
+                  id="palette"
                   value={palette}
                   onChange={(e) => setPalette(e.target.value)}
                   className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white cursor-pointer"

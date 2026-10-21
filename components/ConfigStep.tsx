@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Button } from './Button';
 import { ArrowLeft, ArrowRight, List } from 'lucide-react';
-import { GeneralSettings } from './config/GeneralSettings';
+import React, { useState, useRef } from 'react';
+
+import { Button } from './Button';
 import { AvailableFieldList } from './config/AvailableFieldList';
+import { GeneralSettings } from './config/GeneralSettings';
 import { SelectedFieldList } from './config/SelectedFieldList';
 
 interface ConfigStepProps {
-  filename: string;
   availableFields: string[];
   initialTitle: string;
   initialSelectedFields: string[];
@@ -22,7 +22,6 @@ interface ConfigStepProps {
 }
 
 export const ConfigStep: React.FC<ConfigStepProps> = ({
-  filename,
   availableFields,
   initialTitle,
   initialSelectedFields,
@@ -31,7 +30,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
   onBack,
   onComplete,
 }) => {
-  const [title, setTitle] = useState(initialTitle || `Map of ${filename}`);
+  const [title, setTitle] = useState(initialTitle);
   // State for ordered selected fields. Use prop if available (returning from Map), else default to first 5.
   const [selectedFields, setSelectedFields] = useState<string[]>(
     initialSelectedFields.length > 0 ? initialSelectedFields : availableFields.slice(0, 5)
@@ -70,7 +69,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, position: number) => {
+  const handleDragEnter = (position: number) => {
     dragOverItem.current = position;
   };
 
@@ -113,7 +112,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
   return (
     <div className="max-w-5xl mx-auto h-full flex flex-col pb-8">
       {/* Header */}
-      <div className="mb-8 flex items-center gap-4 animate-in slide-in-from-top-2 duration-500">
+      <div className="mb-8 flex items-center gap-4">
         <button
           onClick={onBack}
           className="p-2 hover:bg-slate-200 rounded-full transition-colors group"
@@ -126,7 +125,7 @@ export const ConfigStep: React.FC<ConfigStepProps> = ({
         </div>
       </div>
 
-      <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 delay-100">
+      <div className="space-y-6">
         {/* Top Section: General Settings */}
         <GeneralSettings
           title={title}
